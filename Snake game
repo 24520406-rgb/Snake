@@ -264,6 +264,20 @@ void showStartMenu()
 }
 #pragma endregion
 
+#pragma region SnakeFunction
+// Draw a part of snake
+void drawSnakePart(Point p)
+{
+	gotoxy(p.x, p.y);
+	cout << BODY;
+}
+
+// Draw whole snake
+void drawSnake()
+{
+	for (size_t i = 0; i < snake.size(); i++)
+		drawSnakePart(snake[i]);
+}
 
 
 
