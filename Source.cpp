@@ -1,163 +1,80 @@
-direction = Direction::down;
-			else if (ch == 'd' && direction != Direction::left)
-				direction = Direction::right;
-			else if (ch == 'q') // Quit game
-			{
-				showEndMenu();
-				break;
-			}
-		}
-		move();
-		drawHeadnTail();
-		if (isAteApple())
-		{
-			score++;
-			displayScore();
-			growing();
-			genApple();
-		}
-		if (isBiteItself())
-		{
-			ShowConsoleCursor(true);
-			showEndMenu();
-			break;
-		}
-		if (isHitWall())
-		{
-			ShowConsoleCursor(true);
-			showEndMenu();
-			break;
-		}
-		Sleep(speed);
-	}
-}
-
-void resetSnake()
+#pragma region GameFunction
+// Draw snakeboard with WIDTH and HEIGHT was set
+void drawBox()
 {
-	score = 0;
-	direction = Direction::right;
-	snake = {
-		Point{ WIDTH / 2 + 2, HEIGHT / 2 },
-		Point{ WIDTH / 2 + 1, HEIGHT / 2 },
-		Point{ WIDTH / 2, HEIGHT / 2 },
-		Point{ WIDTH / 2 - 1, HEIGHT / 2 },
-		Point{ WIDTH / 2 - 2, HEIGHT / 2 }
-	};
-}
-
-// Show at the begining of the game
-void showStartMenu()
-{
-	system("cls");
-	cout << "Welcome to snake game!" << endl;
-	cout << "Options:" << endl;
-	cout << "1. Start" << endl;
-	cout << "2. Quit" << endl;
-	cout << "Your choice: ";
-	int option;
-	cin >> option;
-	if (option == 1)
+    // Vòng lặp này vẽ biên trên cùng của hộp (dùng ký tự '=')
+	for (size_t i = 0; i < WIDTH; i++)
+		cout << '=';
+    
+    // Di chuyển con trỏ xuống hàng cuối cùng (Hàng HEIGHT)
+	gotoxy(0, HEIGHT);
+    
+    // Vòng lặp này vẽ biên dưới cùng của hộp (dùng ký tự '=')
+	for (size_t i = 0; i < WIDTH; i++)
+		cout << '=';
+    
+    // Vòng lặp này vẽ biên bên trái, từ hàng 1 đến HEIGHT-1 (dùng ký tự '|')
+	for (size_t i = 1; i < HEIGHT; i++)
 	{
-		system("cls");
-		cout << "Choose your level (1 - 5): ";
-		int t;
-		cin >> t;
-		speed = 600 - t * 100; // Calculate speed depend on level
-		system("cls");
-		cout << "Tip: While playing game, you can press 'q' to quit";
-		gotoxy(0, 3);
-		cout << "Ready!";
-		Sleep(1000);
-		for (size_t i = 3; i > 0; i--)
-		{
-			gotoxy(0, 3);
-			cout << i << "         ";
-			Sleep(1000);
-		}
-		gotoxy(0, 3);
-		cout << "GO!";
-		Sleep(1000);
-		startGame();
+		gotoxy(0, i); // Di chuyển con trỏ đến cột 0 (biên trái)
+		cout << '|';
 	}
-	else if (option == 2)
-		exit(1);
-}
-#pragma endregion
-
-
-#pragma region SnakeFunction
-// Draw a part of snake
-void drawSnakePart(Point p)
-{
-	gotoxy(p.x, p.y);
-	cout << BODY;
+    
+    // Vòng lặp này vẽ biên bên phải, từ hàng 1 đến HEIGHT-1 (dùng ký tự '|')
+	for (size_t i = 1; i < HEIGHT; i++)
+	{
+		gotoxy(WIDTH, i); // Di chuyển con trỏ đến cột WIDTH (biên phải)
+		cout << '|';
+	}
 }
 
-// Draw whole snake
-void drawSnake()
+// Check if the snake hit the wall
+bool isHitWall()
 {
-	for (size_t i = 0; i < snake.size(); i++)
-		drawSnakePart(snake[i]);
+    // Trả về TRUE nếu đầu rắn (snake[0]) chạm vào bất kỳ biên nào:
+    // Cột 0 (trên cùng), Hàng 0 (trái), Cột WIDTH (dưới cùng), Hàng HEIGHT (phải).
+	return snake[0].x == 0 || snake[0].y == 0 || snake[0].x == WIDTH || snake[0].y == HEIGHT;
 }
 
-// move the snake
-void move()
+// Generate apple on the board
+void genApple()
 {
-	prevTail = snake.back();
-	for (size_t i = snake.size() - 1; i > 0; i--)
-		snake[i] = snake[i - 1];
-	if (direction == Direction::up)
-		snake[0].y -= 1;
-	else if (direction == Direction::down)
-		snake[0].y += 1;
-	else if (direction == Direction::left)
-		snake[0].x -= 1;
-	else if (direction == Direction::right)
-		snake[0].x += 1;
+    // Khởi tạo hạt giống cho hàm rand() dựa trên thời gian hiện tại
+    // Điều này giúp đảm bảo táo xuất hiện ở vị trí ngẫu nhiên mỗi lần chạy.
+	srand(time(0));
+    
+    // Tạo tọa độ X ngẫu nhiên (từ 1 đến WIDTH - 1 để tránh biên)
+	int x = rand() % (WIDTH - 1) + 1;
+    
+    // Tạo tọa độ Y ngẫu nhiên (từ 1 đến HEIGHT - 1 để tránh biên)
+	int y = rand() % (HEIGHT - 1) + 1;
+    
+    // Lưu tọa độ ngẫu nhiên vào biến apple
+	apple = {
+		x,
+		y,
+	};
+    
+    // Di chuyển con trỏ đến vị trí táo mới
+	gotoxy(x, y);
+    
+    // In ra ký tự đại diện cho Táo (thường là APPLE)
+	cout << APPLE;
 }
 
-// Redraw head & tail to make the snake move
-void drawHeadnTail()
+// Check if the snake ate apple
+bool isAteApple()
 {
-	gotoxy(snake[0].x, snake[0].y);
-	cout << BODY;
-	gotoxy(prevTail.x, prevTail.y);
-	cout << ' '; // Clear the old tail
+    // Trả về TRUE nếu tọa độ X VÀ Y của đầu rắn (snake[0]) trùng với tọa độ của táo (apple)
+	return snake[0].x == apple.x && snake[0].y == apple.y;
 }
 
-// Check if snake bite itself
-bool isBiteItself()
+// Show score on right side of the board
+void displayScore()
 {
-	Point head = snake[0];
-	for (size_t i = 1; i < snake.size(); i++)
-		if (head.x == snake[i].x && head.y == snake[i].y)
-			return true;
-	return false;
+    // Di chuyển con trỏ đến vị trí hiển thị điểm (Cột WIDTH + 5, Hàng 2)
+	gotoxy(WIDTH + 5, 2);
+    
+    // In ra chuỗi "Your score: " cùng với giá trị hiện tại của biến 'score'
+	cout << "Your score: " << score;
 }
-
-// Growing snake when it ate an apple
-void growing()
-{
-	snake.push_back(prevTail);
-}
-#pragma endregion
-
-
-#pragma region ConsoleFunction
-// Goto position (x, y)
-void gotoxy(int x, int y)
-{
-	COORD coord;
-	coord.X = x;
-	coord.Y = y;
-	SetConsoleCursorPosition(
-		GetStdHandle(STD_OUTPUT_HANDLE),
-		coord
-	);
-}
-
-// Set the visibility of cursor
-void ShowConsoleCursor(bool showFlag)
-{
-	HANDLE out = GetStdHandle(STD_OUTPUT_HANDLE);
-	CONSOLE_CURSOR_INFO cursorInfo;
